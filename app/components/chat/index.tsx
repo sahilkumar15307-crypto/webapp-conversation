@@ -1,6 +1,6 @@
 'use client'
 import type { FC } from 'react'
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import cn from 'classnames'
 import { useTranslation } from 'react-i18next'
 import Textarea from 'rc-textarea'
@@ -57,6 +57,32 @@ const Chat: FC<IChatProps> = ({
   const isUseInputMethod = useRef(false)
 
   const [query, setQuery] = React.useState('')
+  const [isListening, setIsListening] = useState(false)
+
+const startVoice = () => {
+  const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+
+  if (!SpeechRecognition) {
+    alert('Voice input is not supported on this device/browser')
+    return
+  }
+
+  const recognition = new SpeechRecognition()
+  recognition.lang = 'hi-IN'
+  recognition.interimResults = false
+
+  recognition.onstart = () => setIsListening(true)
+
+  recognition.onresult = (event: any) => {
+    const text = event.results[0][0].transcript
+    setQuery(text)
+    queryRef.current = text
+  }
+
+  recognition.onend = () => setIsListening(false)
+
+  recognition.start()
+}
   const queryRef = useRef('')
 
   const handleContentChange = (e: any) => {
@@ -208,10 +234,16 @@ const Chat: FC<IChatProps> = ({
                       fileConfig={fileConfig}
                       value={attachmentFiles}
                       onChange={setAttachmentFiles}
-                    />
+                    />value={attachmentFiles}
                   </div>
                 )
-              }
+              }<button
+  type="button"
+  onClick={startVoice}
+  className="absolute bottom-2 right-[72px] w-8 h-8 rounded-md bg-gray-100 text-lg"
+>
+  {isListening ? '🔴' : '🎙️'}
+</button>
               <Textarea
                 className={`
                   block w-full px-2 pr-[118px] py-[7px] leading-5 max-h-none text-base text-gray-700 outline-none appearance-none resize-none
